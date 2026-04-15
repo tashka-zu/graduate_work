@@ -1,0 +1,1 @@
+DATABASE_URL = "postgres://postgres:tasha1502@localhost:5432/graduate_work_db"
