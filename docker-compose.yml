@@ -1,0 +1,26 @@
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: tasha1502
+      POSTGRES_DB: graduate_work_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  api:
+    build: .
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: "postgres://postgres:tasha1502@db:5432/graduate_work_db"
+      JWT_SECRET: "change-me-in-production"
+      COOKIE_SECURE: "false"
+    ports:
+      - "8000:8000"
+
+volumes:
+  pgdata:
+
