@@ -3,6 +3,7 @@ import os
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from dotenv import load_dotenv
 from tortoise.contrib.fastapi import register_tortoise
 
 from authentication.database import seed_defaults
@@ -10,6 +11,27 @@ from authentication.errors import AppError
 from authentication.routers.auth import router as auth_router
 from authentication.routers.private_users import router as private_users_router
 from authentication.routers.users import router as users_router
+
+# Load values from .env for local development.
+load_dotenv()
+
+
+def resolve_database_url() -> str:
+    database_url = os.getenv("DATABASE_URL")
+    if database_url:
+        return database_url
+
+    db_name = os.getenv("DB_NAME")
+    db_user = os.getenv("DB_USER")
+    db_password = os.getenv("DB_PASSWORD")
+    db_host = os.getenv("DB_HOST")
+    db_port = os.getenv("DB_PORT")
+    if all([db_name, db_user, db_password, db_host, db_port]):
+        return f"postgres://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
+
+    # SQLite fallback keeps local `uvicorn` start working even without PostgreSQL.
+    return "sqlite://db.sqlite3"
+
 
 app = FastAPI(
     title="Kefir Python Junior Test",
@@ -35,10 +57,7 @@ app.include_router(private_users_router)
 # Initialize Tortoise via official FastAPI integration.
 register_tortoise(
     app,
-    db_url=os.getenv(
-        "DATABASE_URL",
-        "postgres://postgres:tasha1502@localhost:5432/graduate_work_db",
-    ),
+    db_url=resolve_database_url(),
     modules={"models": ["authentication.models.user", "authentication.models.city"]},
     generate_schemas=True,
     add_exception_handlers=False,
